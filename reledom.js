@@ -6,6 +6,36 @@ const fs = require('fs');
  * @param  {[type]} html [description]
  * @return {[type]}      [description]
  */
+/**
+ * 确定浏览器内核
+ */
+function validateCore( ){
+    let core = ['blink','gecko','webkit','edgehtml'];
+    return function( $dom ){
+        for( let i=0,j=core.length; i<j; i++ ){
+           if( $dom.hasClass( core[i] ) ){
+               return core[i];
+           }
+        }
+    }
+}
+/**
+ * 讲字符串序列化为obj
+ */
+function serializeData( text ){
+    let ret = {};
+    if( /no data available/.test( text ) ){
+        return ret;
+    }
+    let reg = /((does not)? triggers?( layout| paint| compositing))/g;
+    while( true ) {
+       let match = reg.exec(text);
+       if (!match) break;
+       ret[match[3]] = match[2] === 'does not' ? false : true;
+    }
+    return ret;
+}
+
 function reledom( html ){
 	let css = [];
     let $ = cheerio.load(html);
