@@ -64,7 +64,8 @@ function reledom( html ){
         css.push(row);
     })
     console.log('写入文件');
-    fs.writeFileSync('./csstrigger.json', JSON.stringify(css)); 
+    fs.writeFileSync('client/data.json', JSON.stringify(css));
+    console.log('end---');
 	return css;
 }
 module.exports = reledom;

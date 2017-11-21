@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+        th,td {
+            border: 1px solid #ccc;
+        }
+        .wrap {
+            padding: 10px;
+            vertical-align: top;
+        }
+        .wrap li {
+            white-space: nowrap;
+        }
+        .wrap td {
+            padding-right: 20px;
+            vertical-align: top;
+        }
+        .wrap:nth-child(2) ol {
+            color: #a100ff;
+        }
+        .wrap:nth-child(3) ol {
+            color: green;;
+        }
+        .wrap:nth-child(4) ol {
+            color:red;
+        }
+    </style>
+</head>
+<body>
+    <div id="csstrigger">
+        加载中...
+    </div>
+
+<script src="js/vue.min.js"></script>
+<script>
+    const browsers = ['blink','webkit','gecko','edgehtml'];
+    const types = ['defaults', 'update'];
+    const phases = {
+        ' layout': 'layout',
+        ' paint': 'paint',
+        ' compositing': 'composite'
+    };
+
+    let engines = {};
+    function initEngines(){
+        browsers.map(engine => {
+            let item = {};
+            for(let phase in phases){
+                item[phases[phase]] = {
+                    'defaults': [],
+                    'update': []
+                };
+            }
+            engines[engine] = item;
+        });
+    }
+    function setEngines(engine, phase, type, css){
+        engines[engine][phase][type].push(css);
+    }
+    function myView(engines, cssLen, engineLen){
+        Vue.component('render-css', {
+            props: [ 'data'],
+            template: `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Default</th>
+                            <th>Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <ol>
+                                    <li v-for="css in data.defaults">
+                                        {{ css }}
+                                    </li>
+                                </ol>
+                            </td>
+                            <td>
+                                <ol>
+                                    <li v-for="css in data.update">
+                                        {{ css }}
+                                    </li>
+                                </ol>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            `
+        });
+
+        new Vue({
+            el: '#csstrigger',
+            template: `
+            <div>
+                <p>覆盖 <em>{{ cssLen }}</em> 个 CSS 属性，<em>{{ engineLen }}</em> 款浏览器内核</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>浏览器</th>
+                            <th>Layout</th>
+                            <th>Paint</th>
+                            <th>Composite</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(engine, key) in engines">
+                            <td>
+                                {{ key }}
+                            </td>
+                            <td class="wrap">
+                                <render-css v-bind:data=engine.layout></render-css>
+                            </td>
+                            <td class="wrap">
+                                <render-css v-bind:data=engine.paint></render-css>
+                            </td>
+                            <td class="wrap">
+                                <render-css v-bind:data=engine.composite></render-css>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            `,
+            data: {
+                engines: engines,
+                cssLen: cssLen,
+                engineLen: engineLen
+            }
+        });
+    }
+
+    initEngines();
+
+    fetch('data.json')
+        .then(function(response){
+            return response.json();
+        })
+        .then(function(data){
+            console.log(data);
+            let cssLen = data.length;
+            let engineLen = browsers.length;
+            data.map(ele => {
+                let css = ele.name;
+                types.map(type => {
+                    browsers.map(engine => {
+                        for(let i in phases){
+                            let phase = phases[i];
+                            if(ele[type][engine][i]==true){
+                                setEngines(engine, phase, type, css);
+                                break;;
+                            }
+                        }
+                    });
+                });
+            });
+            console.log(engines);
+            myView(engines, cssLen, engineLen);
+        });
+</script>
+</body>
+</html>
